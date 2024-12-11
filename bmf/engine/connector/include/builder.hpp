@@ -82,6 +82,8 @@ class RealStream : public std::enable_shared_from_this<RealStream> {
     void SetNotify(std::string const &notify);
 
     void SetAlias(std::string const &alias);
+
+    void SetIdentifier(std::string const &identifier);
     void Start();
 
     nlohmann::json Dump();
@@ -106,6 +108,7 @@ class RealStream : public std::enable_shared_from_this<RealStream> {
     std::string name_;
     std::string notify_;
     std::string alias_;
+    std::string identifier_;
 };
 
 class RealNode : public std::enable_shared_from_this<RealNode> {
@@ -240,6 +243,17 @@ class RealGraph : public std::enable_shared_from_this<RealGraph> {
     Packet Generate(std::string streamName, bool block = true);
     int FillPacket(std::string stream_name, Packet packet, bool block = false);
     std::shared_ptr<RealStream> InputStream(std::string streamName, std::string notify, std::string alias);
+
+    int generate_node_id();
+    int generate_add_id();
+
+    void DynamicRemove();
+    void DynamicAdd(std::shared_ptr<RealStream> module_stream, 
+                    std::shared_ptr<nlohmann::json> inputs, 
+                    std::shared_ptr<nlohmann::json> outputs);
+    void DynamicReset();
+    void Update(std::shared_ptr<RealGraph> update_graph);
+
   private:
     friend bmf::builder::Graph;
     friend bmf::builder::Node;
@@ -257,6 +271,10 @@ class RealGraph : public std::enable_shared_from_this<RealGraph> {
     std::shared_ptr<bmf::BMFGraph> graphInstance_ = nullptr;
     std::map<std::string, std::shared_ptr<RealStream>> existedStreamAlias_;
     std::map<std::string, std::shared_ptr<RealNode>> existedNodeAlias_;
+
+    std::mutex node_id_mutex;
+    int global_node_id_;
+    int global_add_id_;
 };
 } // namespace internal
 
@@ -639,6 +657,16 @@ class BMF_ENGINE_API Graph {
     void Start(std::vector<Stream>& generateStreams, bool dumpGraph = true, bool needMerge = true);
 
     int Close();
+
+    void DynamicRemove();
+
+    void DynamicAdd(std::shared_ptr<Stream> module_stream, 
+                    std::shared_ptr<nlohmann::json> inputs, 
+                    std::shared_ptr<nlohmann::json> outputs);
+
+    void DynamicReset();
+
+    void Update(std::shared_ptr<Graph> update_graph);
 
     std::string Dump();
 

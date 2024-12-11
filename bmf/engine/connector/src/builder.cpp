@@ -68,6 +68,10 @@ void RealStream::SetAlias(std::string const &alias) {
     node->GiveStreamAlias(idx, alias);
 }
 
+void RealStream::SetIdentifier(std::string const &identifier) {
+    identifier_ = identifier;
+}
+
 std::shared_ptr<RealNode> RealStream::AddModule(
     std::string const &alias, const bmf_sdk::JsonParam &option,
     std::vector<std::shared_ptr<RealStream>> inputStreams,
@@ -82,8 +86,10 @@ std::shared_ptr<RealNode> RealStream::AddModule(
 
 nlohmann::json RealStream::Dump() {
     nlohmann::json info;
-
-    info["identifier"] = (notify_.empty() ? "" : (notify_ + ":")) + name_;
+    if (!identifier_.empty())
+        info["identifier"] = identifier_;
+    else
+        info["identifier"] = (notify_.empty() ? "" : (notify_ + ":")) + name_;
     info["alias"] = alias_;
 
     return info;
@@ -421,7 +427,7 @@ int RealGraph::Run(bool dumpGraph, bool needMerge) {
     }
     if (graphInstance_ == nullptr)
         graphInstance_ =
-            std::make_shared<bmf::BMFGraph>(graph_config, false, needMerge);
+            std::make_shared<bmf::BMFGraph>(graph_config, false, true);
     graphInstance_->start();
     return graphInstance_->close();
 }
@@ -473,6 +479,98 @@ std::shared_ptr<RealStream> RealGraph::InputStream(std::string streamName,
         shared_from_this(), streamName, notify, alias);
     inputStreams_.emplace_back(realStream);
     return realStream;
+}
+
+int RealGraph::generate_node_id() {
+    node_id_mutex.lock();
+    int result = global_node_id_;
+    global_node_id_ ++;
+    node_id_mutex.unlock();
+    return result;
+}
+
+int RealGraph::generate_add_id() {
+    node_id_mutex.lock();
+    int result = global_add_id_;
+    global_add_id_ ++;
+    node_id_mutex.unlock();
+    return result;
+}
+
+void RealGraph::DynamicAdd(std::shared_ptr<RealStream> module_stream, 
+                           std::shared_ptr<nlohmann::json> inputs, 
+                           std::shared_ptr<nlohmann::json> outputs) {
+    int nb_links = 0;
+    int add_id = 0;
+
+    if (inputs) {
+        if (module_stream->graph_.lock()->Dump().is_null()) {
+            throw std::logic_error(
+                "generate graph for none graph config");
+        }
+    }
+    std::shared_ptr<RealNode> tail_config;
+    // for (int i = 0; i < module_stream->graph_.lock()->nodes_.size(); i++) {
+    // }
+    for (auto &node : module_stream->graph_.lock()->nodes_) {
+        // node->setAction("add");
+        tail_config = node;
+    }
+    
+    std::string out_link_module_alias = "";
+    if (outputs) {
+        out_link_module_alias = outputs->at("alias").get<std::string>();
+        nb_links = outputs->at("streams").get<int>();
+        if (!tail_config) {
+            throw std::logic_error(
+                "the output node config can't be found");
+        }
+        add_id = generate_add_id();
+        for (int i = 0; i < nb_links; i++) {
+            // auto stream_config = RealStream();
+            std::string out_link_name = out_link_module_alias + "." + std::to_string(
+                add_id) + "_" + std::to_string(i);
+            RealStream stream = RealStream(tail_config, out_link_name, "", out_link_name);
+        }
+    }
+
+    std::string in_link_module_alias = "";
+    if (inputs) {
+        in_link_module_alias = inputs->at("alias").get<std::string>();
+        nb_links = inputs->at("streams").get<int>();
+        std::shared_ptr<bmf::builder::internal::RealNode> ncfg;
+        for (auto &node : module_stream->graph_.lock()->nodes_) {
+            if (node->inputStreams_.size() == 0) {
+                ncfg = node;
+                break;
+            }
+        }
+        if (!ncfg) {
+            throw std::logic_error(
+                "the input node config can't be found");
+        }
+        add_id = generate_add_id();
+        for (int i = 0; i < nb_links; i++) {
+            std::string in_link_name = in_link_module_alias + "." + std::to_string(
+                add_id) + "_" + std::to_string(i);
+            RealStream stream = RealStream(tail_config, in_link_name, "", in_link_name);
+        }
+    }
+    auto graph_config_str = Dump().dump(4);
+    graphInstance_ =
+        std::make_shared<bmf::BMFGraph>(graph_config_str, false, true);
+    
+}
+
+void RealGraph::Update(std::shared_ptr<RealGraph> update_graph) {
+    if (!update_graph || update_graph->Dump().is_null()) {
+        throw std::logic_error(
+            "the graph for update is not created properly");
+    }
+
+    auto graph_config_str = to_string(update_graph->Dump());
+    
+    graphInstance_->update(graph_config_str, false);
 }
 
 } // namespace internal
@@ -806,6 +904,24 @@ void Graph::Start(std::vector<Stream> &generateStreams, bool dumpGraph,
 
 int Graph::Close() {
     return graph_->Close();
+}
+
+void Graph::DynamicRemove() {
+
+}
+
+void Graph::DynamicAdd(std::shared_ptr<Stream> module_stream, 
+                       std::shared_ptr<nlohmann::json> inputs, 
+                       std::shared_ptr<nlohmann::json> outputs) {
+    graph_->DynamicAdd(module_stream->baseP_, inputs, outputs);
+}
+
+void Graph::DynamicReset() {
+
+}
+
+void Graph::Update(std::shared_ptr<Graph> update_graph) {
+    graph_->Update(update_graph->graph_);
 }
 
 Packet Graph::Generate(std::string streamName, bool block) {
