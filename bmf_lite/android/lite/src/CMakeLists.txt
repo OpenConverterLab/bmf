@@ -14,7 +14,7 @@ option(BMF_LITE_ENABLE_OPENGLTEXTUREBUFFER "Enable Enable build OpenglBuffer" ON
 option(BMF_LITE_ENABLE_CPUMEMORYBUFFER "Enable build CpuMemoryBuffer" ON)
 option(BMF_LITE_ENABLE_DENOISE "Enable build denoise" ON)
 option(BMF_LITE_ENABLE_SUPER_RESOLUTION "Enable build super resolution" ON)
-option(BMF_LITE_ENABLE_TEX_GEN_PIC "Enable build tex_gen_pic" ON)
+option(BMF_LITE_ENABLE_TEX_GEN_PIC "Enable build tex_gen_pic" OFF)
 option(BMF_ENABLE_JNI "Enable build with JNI support" ON)
 
 if(BMF_ENABLE_JNI)
