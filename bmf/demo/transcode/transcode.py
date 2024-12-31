@@ -156,11 +156,13 @@ def test_cb():
     graph = bmf.graph()
 
     def cb(para):
-        print("====CallBack====", para)
+        print("====CallBack====", para.decode('UTF-8'))
         return bytes("OK", "ASCII")
 
     # decode
     video = graph.decode({"input_path": input_video_path})
+
+    video.node_.add_user_callback(bmf.BmfCallBackType.LATEST_TIMESTAMP, cb)
 
     bmf.encode(
         video['video'], video['audio'], {

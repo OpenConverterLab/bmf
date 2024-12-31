@@ -12,6 +12,7 @@ CMakeFiles
 _deps
 bmf/files*
 bmf/demo/transcode/*.mp4
+bmf/test/distributed_node/build/*
 !build.gradle
 bmf/c_module_sdk/build
 bmf/c_module_sdk/cmake-build-debug
