@@ -5,15 +5,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Set compiler flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -fPIC")
 
-# Include directories
-include_directories(
-    /root/workspace/bmf_OSPP/output/bmf/include
-    .
-)
-
-# Link directories
-link_directories(/root/workspace/bmf_OSPP/output/bmf/lib)
-
 # Source files
 # set(LIB_SRCS_SPLIT split_module.cpp)
 set(LIB_SRCS_COPY copy_module.cpp)
@@ -27,12 +18,12 @@ add_library(copy_module SHARED ${LIB_SRCS_COPY})
 
 # Link the external libraries to the modules
 # target_link_libraries(split_module engine bmf_module_sdk)
-target_link_libraries(copy_module engine bmf_module_sdk)
+target_link_libraries(copy_module engine bmf_module_sdk hmp)
 # target_link_libraries(assemble_module engine bmf_module_sdk)
 
 # Create the executable and link the shared libraries
 add_executable(cpp_demo ${MAIN_SRCS})
-target_link_libraries(cpp_demo copy_module engine bmf_module_sdk)
+target_link_libraries(cpp_demo copy_module engine bmf_module_sdk hmp)
 
 # Clean up build files
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "cpp_demo")

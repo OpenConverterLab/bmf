@@ -5,3 +5,4 @@ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:$(pwd)/output/bmf/lib
 
 # only set if you want to use BMF in python
 export PYTHONPATH=$(pwd)/output/bmf/lib:$(pwd)/output
+export DYLD_LIBRARY_PATH=~/Documents/Programs/Git/Github/bmf/output/bmf/lib
