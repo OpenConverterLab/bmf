@@ -8,6 +8,10 @@
 *.so
 *.sym
 /build*/
+CMakeFiles
+_deps
+bmf/files*
+bmf/demo/transcode/*.mp4
 !build.gradle
 bmf/c_module_sdk/build
 bmf/c_module_sdk/cmake-build-debug
