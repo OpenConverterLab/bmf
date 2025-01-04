@@ -1,7 +1,6 @@
 #include "builder.hpp"
 #include "nlohmann/json.hpp"
 #include "connector.hpp"
-// #include "../../engine/c_engine/include/callback_layer.h"
 
 bmf_sdk::CBytes my_callback_function(bmf_sdk::CBytes input) {
         std::string strInfo;
