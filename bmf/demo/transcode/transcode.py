@@ -176,6 +176,7 @@ def test_cb():
             }
         }).node_.add_user_callback(bmf.BmfCallBackType.LATEST_TIMESTAMP, cb)
     
+    graph.option_["dump_graph"] = 1
     graph.run()
 
 
