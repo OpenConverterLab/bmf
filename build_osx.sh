@@ -17,6 +17,8 @@ then
     if [ "$1" = "clean" ]
     then
         rm -rf build_osx
+        rm -rf output
+        rm -rf CMakeFiles
         exit
     fi
 
