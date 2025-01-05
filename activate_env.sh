@@ -1,3 +1,5 @@
+#!/bin/bash
+# set the environment variables for bmf
 export C_INCLUDE_PATH=${C_INCLUDE_PATH}:$(pwd)/output/bmf/include
 export CPLUS_INCLUDE_PATH=${CPLUS_INCLUDE_PATH}:$(pwd)/output/bmf/include
 export LIBRARY_PATH=${LIBRARY_PATH}:$(pwd)/output/bmf/lib
