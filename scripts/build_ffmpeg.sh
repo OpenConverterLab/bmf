@@ -124,7 +124,7 @@ function build_vpx_unix() {
 
 function build_ffmpeg_unix() {
     cd $1
-    # 默认版本是4
+    # 默认版本是5
     version=${version:-5}
 
     # 设置FFmpeg版本的下载链接和目录
