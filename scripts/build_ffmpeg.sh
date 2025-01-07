@@ -124,16 +124,41 @@ function build_vpx_unix() {
 
 function build_ffmpeg_unix() {
     cd $1
-    if [ ! -e ffmpeg-4.4.tar.gz2 ]
-    then
-        curl -O -L https://ffmpeg.org/releases/ffmpeg-4.4.tar.bz2
+    # 默认版本是4
+    version=${version:-5}
+
+    # 设置FFmpeg版本的下载链接和目录
+    if [ "$version" == "5" ]; then
+        ffmpeg_version="ffmpeg-5.1.6"
+        ffmpeg_tar="ffmpeg-5.1.6.tar.bz2"
+        ffmpeg_url="https://ffmpeg.org/releases/$ffmpeg_tar"
+    else
+        ffmpeg_version="ffmpeg-4.4"
+        ffmpeg_tar="ffmpeg-4.4.tar.bz2"
+        ffmpeg_url="https://ffmpeg.org/releases/$ffmpeg_tar"
     fi
-    if [ -d ffmpeg-4.4 ]
-    then
-        rm -rf ffmpeg-4.4
+
+
+    # # 目标目录和并行编译核心数等
+    # target_dir=${other_args[0]}    # 第一个参数为目标目录
+    # num_cores=${other_args[1]}     # 第二个参数为并行编译的核心数
+    # extra_config_args="${other_args[@]:2}"  # 从第三个参数开始为额外的配置选项
+
+    # # 进入目标目录
+    # cd $target_dir
+
+    # 如果没有找到 tar 文件，则下载
+    if [ ! -e $ffmpeg_tar ]; then
+        curl -O -L $ffmpeg_url
     fi
-    tar xjvf ffmpeg-4.4.tar.bz2
-    cd ffmpeg-4.4
+
+    # 如果已经存在解压目录，则删除
+    if [ -d $ffmpeg_version ]; then
+        rm -rf $ffmpeg_version
+    fi
+
+    tar xjvf $ffmpeg_tar
+    cd $ffmpeg_version
 
     if [ ${OS} == "Linux" ] && [[ ${DEVICE} =~ "gpu" ]] && [ $(uname -m) == "x86_64" ]
     then

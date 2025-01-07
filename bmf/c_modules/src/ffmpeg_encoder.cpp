@@ -411,7 +411,7 @@ int CFFEncoder::handle_output(AVPacket *hpkt, int idx) {
     AVPacket *pkt = hpkt;
 
     if (idx == 0) {
-        if (callback_endpoint_ != NULL) {
+        if (callback_endpoint_ != nullptr) {
             // float curr_time =
             //     (in_stream_tbs_[0].den > 0 && in_stream_tbs_[0].num > 0)
             //         ? float(pkt->pts * in_stream_tbs_[0].num /

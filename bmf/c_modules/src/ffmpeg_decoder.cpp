@@ -2468,7 +2468,7 @@ int CFFDecoder::process(Task &task) {
         init_input(dec_opts_);
     }
 
-    if (callback_endpoint_ != NULL) {
+    if (callback_endpoint_ != nullptr) {
         std::string info = "total frame number: " + std::to_string(video_stream_->nb_frames);
         auto para = CBytes::make((uint8_t *)info.c_str(), info.size());
         callback_endpoint_(0, para);
