@@ -80,6 +80,10 @@ jobs:
         # test hmp
         (cd bmf/hml/tests/data                  && ./gen.sh $(pwd)/../../../../output/files)
         (cd bmf/hml/tests                       && pytest)
+       
+    - name: Setup tmate session
+      if: ${{ failure() }}
+      uses: mxschmitt/action-tmate@v3
   
   build_and_test_win:
     name: build and test win
