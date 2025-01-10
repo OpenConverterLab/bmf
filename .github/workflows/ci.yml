@@ -33,6 +33,8 @@ jobs:
     - name: build
       id: build
       run: |
+        sed -i 's/option(BMF_ENABLE_PYTHON "Enable build with python support" OFF)/option(BMF_ENABLE_PYTHON "Enable build with python support" ON)/' CMakeLists.txt
+        sed -i 's/option(BMF_ENABLE_TEST "Compile examples and tests" OFF)/option(BMF_ENABLE_TEST "Compile examples and tests" ON)/' CMakeLists.txt
         ./build.sh debug
 
     - name: set envs
