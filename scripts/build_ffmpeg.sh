@@ -21,6 +21,9 @@ do
         --arch=*)
             ARCH=${arg#--arch=}
             ;;
+        --install-dir=*)
+            INSTALL_DIR=${arg#--install-dir=}
+            ;;
         *)
             break
             ;;
@@ -170,6 +173,7 @@ function build_ffmpeg_unix() {
     case $3 in
         x86_64)
             ./configure \
+              --prefix=$INSTALL_DIR \
               --pkg-config-flags="--static" \
               --enable-shared \
               --disable-static \
@@ -180,6 +184,7 @@ function build_ffmpeg_unix() {
             ;;
         arm64)
             ./configure \
+              --prefix=$INSTALL_DIR \
               --pkg-config-flags="--static" \
               --enable-shared \
               --disable-static \
@@ -190,6 +195,7 @@ function build_ffmpeg_unix() {
             ;;
         *)
             ./configure \
+              --prefix=$INSTALL_DIR \
               --pkg-config-flags="--static" \
               --enable-shared \
               --disable-static \
