@@ -415,19 +415,22 @@ then
 
     for arg in $@
     do
-        (build_${arg}_unix $(pwd)/ffmpeg_source ${cores})
-        if [ ${arg} == "nasm" ] || [ ${arg} == "yasm" ]
+        if [[ ${arg} != "--install-dir"* ]]  # Exclude --install-dir from build arguments
         then
-            disable_asm=""
-        fi
+            (build_${arg}_unix $(pwd)/ffmpeg_source ${cores})
+            if [ ${arg} == "nasm" ] || [ ${arg} == "yasm" ]
+            then
+                disable_asm=""
+            fi
 
-        set +e
-        (check_lib $(pwd)/ffmpeg_source ${arg})
-        if [ $? -eq 0 ]
-        then
-            ffmpeg_opts="${ffmpeg_opts} --enable-lib${arg}"
+            set +e
+            (check_lib $(pwd)/ffmpeg_source ${arg})
+            if [ $? -eq 0 ]
+            then
+                ffmpeg_opts="${ffmpeg_opts} --enable-lib${arg}"
+            fi
+            set -e
         fi
-        set -e
     done
 
     ffmpeg_opts="${ffmpeg_opts} ${disable_asm}"
