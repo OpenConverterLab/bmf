@@ -10,7 +10,7 @@ then
     ARCH=$(uname -m)
 fi
 
-INSTALL_DIR=${INSTALL_DIR:-$(pwd)}
+INSTALL_DIR=${INSTALL_DIR:-/usr/local}
 
 while [[ $# -gt 0 ]]
 do
