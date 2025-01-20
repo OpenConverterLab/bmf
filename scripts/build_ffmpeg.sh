@@ -10,6 +10,7 @@ then
     ARCH=$(uname -m)
 fi
 
+INSTALL_DIR=${INSTALL_DIR:-$(pwd)}
 
 while [[ $# -gt 0 ]]
 do
@@ -53,7 +54,7 @@ function build_nasm_unix() {
     tar xjvf nasm-2.15.05.tar.bz2
     cd nasm-2.15.05
     ./autogen.sh
-    ./configure --enable-shared
+    ./configure --enable-shared --prefix=$INSTALL_DIR
     make -j $2
     make install
 }
@@ -63,7 +64,7 @@ function build_yasm_unix() {
     curl -O -L https://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz
     tar xzvf yasm-1.3.0.tar.gz
     cd yasm-1.3.0
-    ./configure
+    ./configure --prefix=$INSTALL_DIR
     make -j $2
     make install
 }
@@ -72,7 +73,7 @@ function build_x264_unix() {
     cd $1
     git clone --branch stable --depth 1 https://code.videolan.org/videolan/x264.git
     cd x264
-    ./configure --enable-shared
+    ./configure --enable-shared --prefix=$INSTALL_DIR
     make -j $2
     make install
 }
@@ -81,7 +82,7 @@ function build_x265_unix() {
     cd $1
     git clone --branch stable --depth 7 https://bitbucket.org/multicoreware/x265_git
     cd $1/x265_git/build/linux
-    cmake -G "Unix Makefiles" -DENABLE_SHARED:bool=off ../../source
+    cmake -G "Unix Makefiles" -DENABLE_SHARED:bool=off -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR ../../source
     make -j $2
     make install
 }
@@ -91,7 +92,7 @@ function build_fdk-aac_unix() {
     git clone --depth 1 https://github.com/mstorsjo/fdk-aac
     cd fdk-aac
     autoreconf -fiv
-    ./configure --enable-shared
+    ./configure --enable-shared --prefix=$INSTALL_DIR
     make -j $2
     make install
 }
@@ -101,7 +102,7 @@ function build_mp3lame_unix() {
     curl -O -L https://downloads.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz
     tar xzvf lame-3.100.tar.gz
     cd lame-3.100
-    ./configure --enable-shared --enable-nasm
+    ./configure --enable-shared --enable-nasm --prefix=$INSTALL_DIR
     make -j $2
     make install
 }
@@ -111,7 +112,7 @@ function build_opus_unix() {
     curl -O -L https://archive.mozilla.org/pub/opus/opus-1.3.1.tar.gz
     tar xzvf opus-1.3.1.tar.gz
     cd opus-1.3.1
-    ./configure --enable-shared
+    ./configure --enable-shared --prefix=$INSTALL_DIR
     make -j $2
     make install
 }
@@ -120,7 +121,7 @@ function build_vpx_unix() {
     cd $1
     git clone --depth 1 https://chromium.googlesource.com/webm/libvpx.git
     cd libvpx
-    ./configure --disable-examples --disable-unit-tests --enable-vp9-highbitdepth --as=yasm
+    ./configure --disable-examples --disable-unit-tests --enable-vp9-highbitdepth --as=yasm --prefix=$INSTALL_DIR
     make -j $2
     make install
 }
