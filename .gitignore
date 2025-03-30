@@ -9,6 +9,7 @@
 *.sym
 /build*/
 !build.gradle
+bmf/files*
 bmf/c_module_sdk/build
 bmf/c_module_sdk/cmake-build-debug
 bmf/c_module_sdk/.idea

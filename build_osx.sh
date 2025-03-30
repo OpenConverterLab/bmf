@@ -17,6 +17,7 @@ then
     if [ "$1" = "clean" ]
     then
         rm -rf build_osx
+        rm -rf output
         exit
     fi
 
@@ -26,6 +27,15 @@ then
         BUILD_TYPE="Debug"
         COVERAGE_OPTION=1
     fi
+fi
+
+BMF_PYVER="3"
+if [[ -z "${BMF_PYTHON_VERSION}" ]]
+then
+    echo "BMF_PYTHON_VERSION is not set, using default Python 3"
+else
+    echo "Compiling for Python ${BMF_PYTHON_VERSION}"
+    BMF_PYVER="${BMF_PYTHON_VERSION}"
 fi
 
 # Generate BMF version

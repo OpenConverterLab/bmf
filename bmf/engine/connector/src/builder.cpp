@@ -253,6 +253,7 @@ nlohmann::json RealNode::Dump() {
 
     info["id"] = id_;
     info["alias"] = alias_;
+    info["action"] = action_;
     info["module_info"] = moduleInfo_.Dump();
     info["meta_info"] = metaInfo_.Dump();
     info["input_streams"] = nlohmann::json::array();
@@ -332,11 +333,13 @@ std::shared_ptr<RealNode> RealGraph::AddModule(
     //                capacity (1024 by default).");
     if (mode_ == ServerMode)
         inputStreamManager = Server;
-    int node_id = nodes_.size();
+    //int node_id = nodes_.size();
+    static int node_id = 0;
+    // generate_add_id();
     nodes_.emplace_back(std::move(std::make_shared<RealNode>(
-        shared_from_this(), node_id, alias, option, inputStreams, moduleName,
+        shared_from_this(), node_id++, alias, option, inputStreams, moduleName,
         moduleType, modulePath, moduleEntry, inputStreamManager, scheduler)));
-    return nodes_[node_id];
+    return nodes_[nodes_.size() - 1];
 }
 
 std::shared_ptr<RealNode> RealGraph::GetAliasedNode(std::string const &alias) {
@@ -513,7 +516,7 @@ void RealGraph::DynamicAdd(std::shared_ptr<RealStream> module_stream,
     // for (int i = 0; i < module_stream->graph_.lock()->nodes_.size(); i++) {
     // }
     for (auto &node : module_stream->graph_.lock()->nodes_) {
-        // node->setAction("add");
+        node->action_ = "add";
         tail_config = node;
     }
     
@@ -526,11 +529,13 @@ void RealGraph::DynamicAdd(std::shared_ptr<RealStream> module_stream,
                 "the output node config can't be found");
         }
         add_id = generate_add_id();
+        tail_config->outputStreams_.clear();/* for test */
         for (int i = 0; i < nb_links; i++) {
             // auto stream_config = RealStream();
             std::string out_link_name = out_link_module_alias + "." + std::to_string(
                 add_id) + "_" + std::to_string(i);
-            RealStream stream = RealStream(tail_config, out_link_name, "", out_link_name);
+            auto stream = std::make_shared<RealStream>(tail_config, out_link_name, "", out_link_name);
+            tail_config->outputStreams_.push_back(stream);
         }
     }
 
@@ -550,10 +555,12 @@ void RealGraph::DynamicAdd(std::shared_ptr<RealStream> module_stream,
                 "the input node config can't be found");
         }
         add_id = generate_add_id();
+        tail_config->inputStreams_.clear();/* for test */
         for (int i = 0; i < nb_links; i++) {
             std::string in_link_name = in_link_module_alias + "." + std::to_string(
                 add_id) + "_" + std::to_string(i);
-            RealStream stream = RealStream(tail_config, in_link_name, "", in_link_name);
+            auto stream = std::make_shared<RealStream>(tail_config, in_link_name, "", in_link_name);
+            tail_config->inputStreams_.push_back(stream);
         }
     }
     auto graph_config_str = Dump().dump(4);

@@ -189,6 +189,7 @@ class RealNode : public std::enable_shared_from_this<RealNode> {
     std::weak_ptr<RealGraph> graph_;
     int id_;
     std::string alias_;
+    std::string action_;
     bmf_sdk::JsonParam option_;
     std::vector<std::shared_ptr<RealStream>> inputStreams_;
     std::vector<std::shared_ptr<RealStream>> outputStreams_;
@@ -273,8 +274,8 @@ class RealGraph : public std::enable_shared_from_this<RealGraph> {
     std::map<std::string, std::shared_ptr<RealNode>> existedNodeAlias_;
 
     std::mutex node_id_mutex;
-    int global_node_id_;
-    int global_add_id_;
+    inline static int global_node_id_ = 0;
+    inline static int global_add_id_ = 0;
 };
 } // namespace internal
 

@@ -191,6 +191,8 @@ NodeConfig::NodeConfig(const NodeConfig &other)
 
 std::string NodeConfig::get_alias() { return alias; }
 
+void NodeConfig::set_action(std::string action) { this->action = action; }
+
 std::string NodeConfig::get_action() { return action; }
 
 void NodeConfig::init(nlohmann::json &node_config) {
