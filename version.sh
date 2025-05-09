@@ -1,4 +1,5 @@
 #!/bin/bash
+#!test
 if [[ $OS == *Windows* ]]; 
 then
     BMF_BUILD_VERSION=$(python setup.py --version)

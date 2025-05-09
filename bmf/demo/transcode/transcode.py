@@ -148,7 +148,7 @@ def test_video():
 
 
 def test_cb():
-    input_video_path = "../../files/img.mp4"
+    input_video_path = "../../files/big_bunny_10s_30fps.mp4"
     output_path = "./cb.mp4"
     expect_result = '../transcode/cb.mp4|240|320|7.615000|MOV,MP4,M4A,3GP,3G2,MJ2|366635|348991|h264|' \
                     '{"fps": "30.0662251656"}'
@@ -156,14 +156,15 @@ def test_cb():
     graph = bmf.graph()
 
     def cb(para):
-        print(para)
-
-    graph.add_user_callback(bmf.BmfCallBackType.LATEST_TIMESTAMP, cb)
+        print("====CallBack====", para.decode('UTF-8'))
+        return bytes("OK", "ASCII")
 
     # decode
     video = graph.decode({"input_path": input_video_path})
 
-    (bmf.encode(
+    video.node_.add_user_callback(bmf.BmfCallBackType.LATEST_TIMESTAMP, cb)
+
+    bmf.encode(
         video['video'], video['audio'], {
             "output_path": output_path,
             "video_params": {
@@ -173,7 +174,10 @@ def test_cb():
                 "crf": "23",
                 "preset": "veryfast"
             }
-        }).run())
+        }).node_.add_user_callback(bmf.BmfCallBackType.LATEST_TIMESTAMP, cb)
+    
+    graph.option_["dump_graph"] = 1
+    graph.run()
 
 
 def compareProfile(graph_file):
@@ -235,5 +239,5 @@ if __name__ == '__main__':
     # test_simple()
     # test_audio()
     # test_video()
-    # test_cb()
-    compare()
+    test_cb()
+    # compare()

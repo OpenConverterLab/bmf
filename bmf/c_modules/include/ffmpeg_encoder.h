@@ -138,6 +138,8 @@ class CFFEncoder : public Module {
     CurrentImage2Buffer current_image_buffer_ = {0};
     bool copy_ts_ = false;
     bool has_complex_filtergraph_ = false;
+    // use for callback to get the frame number
+    int frame_number = 0;
 
   public:
     CFFEncoder(int node_id, JsonParam option);

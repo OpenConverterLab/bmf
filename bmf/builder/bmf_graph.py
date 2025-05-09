@@ -511,6 +511,7 @@ class BmfGraph:
         # set callback function
         for key, callback in callback_dict.items():
             callback_binding = "{}:{}".format(key, callback[0])
+            print(callback_binding)
             meta_info_config.add_callback_binding(callback_binding)
 
         return meta_info_config

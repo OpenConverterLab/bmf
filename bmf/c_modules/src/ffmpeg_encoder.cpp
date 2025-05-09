@@ -411,14 +411,16 @@ int CFFEncoder::handle_output(AVPacket *hpkt, int idx) {
     AVPacket *pkt = hpkt;
 
     if (idx == 0) {
-        if (callback_endpoint_ != NULL) {
-            float curr_time =
-                (in_stream_tbs_[0].den > 0 && in_stream_tbs_[0].num > 0)
-                    ? float(pkt->pts * in_stream_tbs_[0].num /
-                            in_stream_tbs_[0].den)
-                    : 0;
+        if (callback_endpoint_ != nullptr) {
+            // float curr_time =
+            //     (in_stream_tbs_[0].den > 0 && in_stream_tbs_[0].num > 0)
+            //         ? float(pkt->pts * in_stream_tbs_[0].num /
+            //                 in_stream_tbs_[0].den)
+            //         : 0;
 
-            std::string info = "pts: " + std::to_string(curr_time);
+            // std::string info = "pts: " + std::to_string(curr_time);
+            std::string info = "pts: " + std::to_string(pkt->pts) + " dts: " + std::to_string(pkt->dts)
+                                +" frame number: "+ std::to_string(++frame_number);
             auto para = CBytes::make((uint8_t *)info.c_str(), info.size());
             callback_endpoint_(0, para);
         }

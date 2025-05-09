@@ -10,6 +10,7 @@ then
     ARCH=$(uname -m)
 fi
 
+INSTALL_DIR=${INSTALL_DIR:-/usr/local}
 
 while [[ $# -gt 0 ]]
 do
@@ -20,6 +21,9 @@ do
             ;;
         --arch=*)
             ARCH=${arg#--arch=}
+            ;;
+        --install-dir=*)
+            INSTALL_DIR=${arg#--install-dir=}
             ;;
         *)
             break
@@ -50,7 +54,7 @@ function build_nasm_unix() {
     tar xjvf nasm-2.15.05.tar.bz2
     cd nasm-2.15.05
     ./autogen.sh
-    ./configure --enable-shared
+    ./configure --enable-shared --prefix=$INSTALL_DIR
     make -j $2
     make install
 }
@@ -60,7 +64,7 @@ function build_yasm_unix() {
     curl -O -L https://www.tortall.net/projects/yasm/releases/yasm-1.3.0.tar.gz
     tar xzvf yasm-1.3.0.tar.gz
     cd yasm-1.3.0
-    ./configure
+    ./configure --prefix=$INSTALL_DIR
     make -j $2
     make install
 }
@@ -69,7 +73,7 @@ function build_x264_unix() {
     cd $1
     git clone --branch stable --depth 1 https://code.videolan.org/videolan/x264.git
     cd x264
-    ./configure --enable-shared
+    ./configure --enable-shared --prefix=$INSTALL_DIR
     make -j $2
     make install
 }
@@ -78,7 +82,7 @@ function build_x265_unix() {
     cd $1
     git clone --branch stable --depth 7 https://bitbucket.org/multicoreware/x265_git
     cd $1/x265_git/build/linux
-    cmake -G "Unix Makefiles" -DENABLE_SHARED:bool=off ../../source
+    cmake -G "Unix Makefiles" -DENABLE_SHARED:bool=off -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR ../../source
     make -j $2
     make install
 }
@@ -88,7 +92,7 @@ function build_fdk-aac_unix() {
     git clone --depth 1 https://github.com/mstorsjo/fdk-aac
     cd fdk-aac
     autoreconf -fiv
-    ./configure --enable-shared
+    ./configure --enable-shared --prefix=$INSTALL_DIR
     make -j $2
     make install
 }
@@ -98,7 +102,7 @@ function build_mp3lame_unix() {
     curl -O -L https://downloads.sourceforge.net/project/lame/lame/3.100/lame-3.100.tar.gz
     tar xzvf lame-3.100.tar.gz
     cd lame-3.100
-    ./configure --enable-shared --enable-nasm
+    ./configure --enable-shared --enable-nasm --prefix=$INSTALL_DIR
     make -j $2
     make install
 }
@@ -108,7 +112,7 @@ function build_opus_unix() {
     curl -O -L https://archive.mozilla.org/pub/opus/opus-1.3.1.tar.gz
     tar xzvf opus-1.3.1.tar.gz
     cd opus-1.3.1
-    ./configure --enable-shared
+    ./configure --enable-shared --prefix=$INSTALL_DIR
     make -j $2
     make install
 }
@@ -117,23 +121,36 @@ function build_vpx_unix() {
     cd $1
     git clone --depth 1 https://chromium.googlesource.com/webm/libvpx.git
     cd libvpx
-    ./configure --disable-examples --disable-unit-tests --enable-vp9-highbitdepth --as=yasm
+    ./configure --disable-examples --disable-unit-tests --enable-vp9-highbitdepth --as=yasm --prefix=$INSTALL_DIR
     make -j $2
     make install
 }
 
 function build_ffmpeg_unix() {
     cd $1
-    if [ ! -e ffmpeg-4.4.tar.gz2 ]
-    then
-        curl -O -L https://ffmpeg.org/releases/ffmpeg-4.4.tar.bz2
+    
+    version=${version:-5}
+
+    if [ "$version" == "5" ]; then
+        ffmpeg_version="ffmpeg-5.1.6"
+        ffmpeg_tar="ffmpeg-5.1.6.tar.bz2"
+        ffmpeg_url="https://ffmpeg.org/releases/$ffmpeg_tar"
+    else
+        ffmpeg_version="ffmpeg-4.4"
+        ffmpeg_tar="ffmpeg-4.4.tar.bz2"
+        ffmpeg_url="https://ffmpeg.org/releases/$ffmpeg_tar"
     fi
-    if [ -d ffmpeg-4.4 ]
-    then
-        rm -rf ffmpeg-4.4
+
+    if [ ! -e $ffmpeg_tar ]; then
+        curl -O -L $ffmpeg_url
     fi
-    tar xjvf ffmpeg-4.4.tar.bz2
-    cd ffmpeg-4.4
+
+    if [ -d $ffmpeg_version ]; then
+        rm -rf $ffmpeg_version
+    fi
+
+    tar xjvf $ffmpeg_tar
+    cd $ffmpeg_version
 
     if [ ${OS} == "Linux" ] && [[ ${DEVICE} =~ "gpu" ]] && [ $(uname -m) == "x86_64" ]
     then
@@ -145,6 +162,7 @@ function build_ffmpeg_unix() {
     case $3 in
         x86_64)
             ./configure \
+              --prefix=$INSTALL_DIR \
               --pkg-config-flags="--static" \
               --enable-shared \
               --disable-static \
@@ -155,6 +173,7 @@ function build_ffmpeg_unix() {
             ;;
         arm64)
             ./configure \
+              --prefix=$INSTALL_DIR \
               --pkg-config-flags="--static" \
               --enable-shared \
               --disable-static \
@@ -165,6 +184,7 @@ function build_ffmpeg_unix() {
             ;;
         *)
             ./configure \
+              --prefix=$INSTALL_DIR \
               --pkg-config-flags="--static" \
               --enable-shared \
               --disable-static \
@@ -386,19 +406,22 @@ then
 
     for arg in $@
     do
-        (build_${arg}_unix $(pwd)/ffmpeg_source ${cores})
-        if [ ${arg} == "nasm" ] || [ ${arg} == "yasm" ]
+        if [[ ${arg} != "--install-dir"* ]]  # Exclude --install-dir from build arguments
         then
-            disable_asm=""
-        fi
+            (build_${arg}_unix $(pwd)/ffmpeg_source ${cores})
+            if [ ${arg} == "nasm" ] || [ ${arg} == "yasm" ]
+            then
+                disable_asm=""
+            fi
 
-        set +e
-        (check_lib $(pwd)/ffmpeg_source ${arg})
-        if [ $? -eq 0 ]
-        then
-            ffmpeg_opts="${ffmpeg_opts} --enable-lib${arg}"
+            set +e
+            (check_lib $(pwd)/ffmpeg_source ${arg})
+            if [ $? -eq 0 ]
+            then
+                ffmpeg_opts="${ffmpeg_opts} --enable-lib${arg}"
+            fi
+            set -e
         fi
-        set -e
     done
 
     ffmpeg_opts="${ffmpeg_opts} ${disable_asm}"
