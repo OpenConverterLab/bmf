@@ -435,6 +435,37 @@ int RealGraph::Run(bool dumpGraph, bool needMerge) {
     return graphInstance_->close();
 }
 
+int RealGraph::Update(const bmf_sdk::JsonParam& update_config) {
+    std::string config_str = update_config.json_value_.dump();
+    BMFLOG(BMF_INFO) << "[RealGraph::Update] 底层配置(原始 JSON): " << config_str;
+
+    graphInstance_->update(config_str, false);
+    BMFLOG(BMF_INFO) << "[RealGraph::Update] 成功";
+
+    return 0;
+}
+
+nlohmann::json RealGraph::DynamicResetNode(const bmf_sdk::JsonParam& node_config) {
+    if (!node_config.json_value_.is_object() || !node_config.json_value_.contains("alias")) {
+        BMFLOG(BMF_ERROR) << "[RealGraph::DynamicResetNode] 配置无效，缺少 alias";
+        return nlohmann::json();
+    }
+
+    nlohmann::json node_json;
+    node_json["action"] = "reset";
+    node_json["alias"] = node_config.json_value_["alias"];
+
+    nlohmann::json option_json = node_config.json_value_;
+    option_json.erase("alias");
+    node_json["option"] = option_json;
+
+    nlohmann::json update_config;
+    update_config["nodes"] = nlohmann::json::array({node_json});
+
+    BMFLOG(BMF_INFO) << "[RealGraph::DynamicResetNode] 生成重置配置:\n" << update_config.dump(2);
+    return update_config;
+}
+
 void RealGraph::Start(
     const std::vector<std::shared_ptr<internal::RealStream>> &streams,
     bool dumpGraph, bool needMerge) {
@@ -822,6 +853,14 @@ void Graph::Start(std::vector<Stream> &generateStreams, bool dumpGraph,
     graph_->Start(generateRealStreams, dumpGraph, needMerge);
 }
 
+int Graph::Update(const bmf_sdk::JsonParam& update_config) {
+    return graph_->Update(update_config);
+}
+
+nlohmann::json Graph::DynamicResetNode(const bmf_sdk::JsonParam &node_config) {
+    return graph_->DynamicResetNode(node_config);
+}
+
 int Graph::Close() {
     return graph_->Close();
 }
@@ -1095,60 +1134,6 @@ Stream Graph::InputStream(std::string streamName, std::string notify,
 int Graph::FillPacket(std::string streamName, Packet packet, bool block) {
     return graph_->FillPacket(streamName, packet, block);
 }
-
-
-
-// ----------------- update -----------------
-int Graph::Update(const bmf_sdk::JsonParam& update_config) {
-    try {
-        // 直接传递配置给engine层
-        std::string config_str = update_config.json_value_.dump();
-        BMFLOG(BMF_INFO) << "[Update] 底层配置(原始 JSON): " << config_str;  
-
-        // 调用底层 update
-        graph_->graphInstance_->update(config_str, false);
-        BMFLOG(BMF_INFO) << "[Update] 成功";  
-
-        return 0;
-    } catch (const std::exception& e) {
-        BMFLOG(BMF_ERROR) << "[Update] 异常: " << e.what(); 
-        return -1;
-    }
-}
-
-
-// ----------------- 动态重置节点 -----------------
-nlohmann::json Graph::DynamicResetNode(const bmf_sdk::JsonParam &node_config) {
-    try {
-        // 1. 校验必要字段：只需要 alias
-        if (!node_config.json_value_.is_object() ||
-            !node_config.json_value_.contains("alias")) {
-            BMFLOG(BMF_ERROR) << "[DynamicResetNode] 配置无效，缺少 alias"; 
-            return nlohmann::json();
-        }
-
-        // 2. 构造极简的 reset 节点配置
-        nlohmann::json node_json;
-        node_json["action"] = "reset";
-        node_json["alias"] = node_config.json_value_["alias"];
-
-        nlohmann::json option_json = node_config.json_value_;
-        option_json.erase("alias");
-        node_json["option"] = option_json;
-
-        // 构造最终 update 配置
-        nlohmann::json update_config;
-        update_config["nodes"] = nlohmann::json::array({node_json});
-
-        BMFLOG(BMF_INFO) << "[DynamicResetNode] 生成重置配置:\n" << update_config.dump(2); 
-        return update_config;
-
-    } catch (const std::exception &e) {
-        BMFLOG(BMF_ERROR) << "[DynamicResetNode] 异常: " << e.what();  
-        return nlohmann::json();
-    }
-}
-
 
 void SyncPackets::Insert(int streamId, std::vector<Packet> frames) {
     packets.insert(std::make_pair(streamId, frames));
