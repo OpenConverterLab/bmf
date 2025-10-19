@@ -1097,13 +1097,6 @@ int Graph::FillPacket(std::string streamName, Packet packet, bool block) {
 }
 
 
-static inline bool check_graph_instance(const std::shared_ptr<bmf::BMFGraph>& graph_instance, const char* func_name) { 
-    if (!graph_instance) {  // 检查底层BMFGraph实例是否为空
-        BMFLOG(BMF_ERROR) << "[builder::Graph::" << func_name << "] BMFGraph instance not initialized";
-        return false;
-    }
-    return true;
-}
 
 // ----------------- update -----------------
 int Graph::Update(const bmf_sdk::JsonParam& update_config) {
@@ -1119,98 +1112,6 @@ int Graph::Update(const bmf_sdk::JsonParam& update_config) {
         return 0;
     } catch (const std::exception& e) {
         BMFLOG(BMF_ERROR) << "[Update] 异常: " << e.what(); 
-        return -1;
-    }
-}
-
-
-// 动态添加节点
-int Graph::DynamicAddNode(const bmf_sdk::JsonParam& node_config) {
-    try {
-        // 1. 提取节点配置
-        JsonParam update_cfg;
-        nlohmann::json target_node;
-        if (node_config.json_value_.contains("nodes") &&
-            node_config.json_value_["nodes"].is_array()) {
-            target_node = node_config.json_value_["nodes"][0];
-        } else {
-            target_node = node_config.json_value_;
-        }
-
-        // 2. 补全必填字段
-        if (!target_node.contains("action")) target_node["action"] = "add";
-        if (!target_node.contains("scheduler")) target_node["scheduler"] = 0;
-        if (!target_node.contains("input_manager")) target_node["input_manager"] = "immediate";
-
-        if (!target_node.contains("meta_info") || !target_node["meta_info"].is_object()) {
-            target_node["meta_info"] = nlohmann::json({
-                {"premodule_id", -1},
-                {"callback_binding", nlohmann::json::array()},
-                {"queue_length_limit", 5}
-            });
-        }
-
-        if (!target_node.contains("module_info") || !target_node["module_info"].is_object()) {
-            target_node["module_info"] = nlohmann::json({
-                {"name", "c_ffmpeg_filter"},
-                {"type", "c++"},
-                {"path", "/root/bmf/output/bmf/lib/libbuiltin_modules.so"},
-                {"entry", ""}
-            });
-        }
-
-        if (target_node.contains("output_streams") &&
-            target_node["output_streams"].is_array()) {
-            for (auto& os : target_node["output_streams"]) {
-                if (!os.contains("identifier")) {
-                    os["identifier"] = "c_ffmpeg_filter_" +
-                                       std::to_string(target_node.value("id", 0)) + "_0";
-                }
-            }
-        }
-
-        // 3. 构造 update 配置
-        update_cfg.json_value_["nodes"] = nlohmann::json::array({target_node});
-        update_cfg.json_value_["option"] = nlohmann::json::object();
-
-        BMFLOG(BMF_INFO) << "[dynamic_add_node] 调用 update 配置:\n"
-                         << update_cfg.json_value_.dump(4);
-
-        return Update(update_cfg);
-
-    } catch (const std::exception& e) {
-        BMFLOG(BMF_ERROR) << "[dynamic_add_node] 异常: " << e.what();
-        return -1;
-    }
-}
-
-
-// ----------------- 动态删除节点 -----------------
-int Graph::DynamicRemoveNode(const bmf_sdk::JsonParam& node_config) {
-    try {
-        // 1. 基础校验
-        if (!node_config.json_value_.is_object() ||
-            (!node_config.json_value_.contains("id") &&
-             !node_config.json_value_.contains("alias"))) {
-            BMFLOG(BMF_ERROR) << "[dynamic_remove_node] 缺少 id 或 alias";
-            return -1;
-        }
-
-        // 2. 构造删除配置
-        JsonParam update_cfg;
-        update_cfg.json_value_["nodes"] =
-            nlohmann::json::array({node_config.json_value_});
-        update_cfg.json_value_["nodes"][0]["action"] = "remove";
-        update_cfg.json_value_["option"] = nlohmann::json::object();
-
-        // 3. 调用 update
-        BMFLOG(BMF_INFO) << "[dynamic_remove_node] 调用 update 配置:\n"
-                         << update_cfg.json_value_.dump(4);
-
-        return Update(update_cfg);
-
-    } catch (const std::exception& e) {
-        BMFLOG(BMF_ERROR) << "[dynamic_remove_node] 异常: " << e.what();
         return -1;
     }
 }

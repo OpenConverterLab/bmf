@@ -621,10 +621,6 @@ class BMF_ENGINE_API Graph {
 
     int Update(const bmf_sdk::JsonParam& update_config);
 
-    int DynamicAddNode(const bmf_sdk::JsonParam& node_config);
-
-    int DynamicRemoveNode(const bmf_sdk::JsonParam& node_config);
-
     nlohmann::json DynamicResetNode(const bmf_sdk::JsonParam& node_config);
 
   
