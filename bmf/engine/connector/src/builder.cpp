@@ -1106,132 +1106,26 @@ static inline bool check_graph_instance(const std::shared_ptr<bmf::BMFGraph>& gr
 }
 
 // ----------------- update -----------------
-int Graph::update(const bmf_sdk::JsonParam& update_config) {
-    if (!check_graph_instance(graph_->graphInstance_, "update")) {
-        return -1;
-    }
-
+int Graph::Update(const bmf_sdk::JsonParam& update_config) {
     try {
-        JsonParam new_update_config = update_config;
-
-        if (new_update_config.json_value_.contains("nodes") &&
-            new_update_config.json_value_["nodes"].is_array()) {
-
-            auto& nodes = new_update_config.json_value_["nodes"];
-            for (auto& node : nodes) {
-                std::shared_ptr<internal::RealNode> matched_node = nullptr;
-
-                // 1. 补全 reset 节点 id（通过 alias 查找原节点）
-                if ((!node.contains("id") || node["id"].is_null()) &&
-                    node.contains("action") && node["action"] == "reset" &&
-                    node.contains("alias")) {
-
-                    std::string alias = node["alias"].get<std::string>();
-                    bool found = false;
-                    for (auto &real_node : graph_->nodes_) {
-                        if (real_node && real_node->alias_ == alias) {
-                            node["id"] = real_node->id_;
-                            BMFLOG(BMF_INFO) << "[update] reset 节点通过 alias 匹配补全 id: alias="
-                                             << alias << " id=" << real_node->id_;
-                            found = true;
-                            matched_node = real_node;
-                            break;
-                        }
-                    }
-                    if (!found) {
-                        BMFLOG(BMF_ERROR) << "[update] 找不到 alias 对应的节点: " << alias;
-                        continue;
-                    }
-                }
-
-                // 2. 校验 id
-                if (!node.contains("id")) {
-                    BMFLOG(BMF_ERROR) << "[update] 节点缺少 id，跳过";
-                    continue;
-                }
-                int node_id = node["id"].get<int>();
-
-                // 3. 查找原节点
-                std::shared_ptr<internal::RealNode> real_node = matched_node;
-                if (!real_node) {
-                    for (auto &n : graph_->nodes_) {
-                        if (n && n->id_ == node_id) {
-                            real_node = n;
-                            break;
-                        }
-                    }
-                }
-                if (!real_node) {
-                    BMFLOG(BMF_ERROR) << "[update] 找不到 id 对应节点: " << node_id;
-                    continue;
-                }
-
-                // 4. 补全 module_info
-                if (!node.contains("module_info") || !node["module_info"].is_object()) {
-                    auto& module = real_node->moduleInfo_;
-                    std::string module_type_str;
-                    switch (module.moduleType_) {
-                        case CPP:    module_type_str = "c++"; break;
-                        case Python: module_type_str = "python"; break;
-                        case C:      module_type_str = "c"; break;
-                        case Go:     module_type_str = "go"; break;
-                        default:     module_type_str = "";
-                    }
-                    node["module_info"] = nlohmann::json({
-                        {"name", module.moduleName_},
-                        {"type", module_type_str},
-                        {"path", module.modulePath_},
-                        {"entry", module.moduleEntry_}
-                    });
-                    BMFLOG(BMF_INFO) << "[update] 补全 module_info: node_id=" << node_id
-                                     << " name=" << module.moduleName_;
-                }
-
-                // 5. 补全 input_manager
-                if (!node.contains("input_manager") || !node["input_manager"].is_string()) {
-                    std::string im_str;
-                    switch (real_node->inputManager_) {
-                        case Immediate: im_str = "immediate"; break;
-                        case Default:   im_str = "default"; break;
-                        case Server:    im_str = "server"; break;
-                        default:        im_str = "default";
-                    }
-                    node["input_manager"] = im_str;
-                    BMFLOG(BMF_INFO) << "[update] 补全 input_manager: node_id=" << node_id
-                                     << " type=" << im_str;
-                }
-
-                // 6. 补全 scheduler
-                if (!node.contains("scheduler") || !node["scheduler"].is_number()) {
-                    node["scheduler"] = real_node->scheduler_;
-                    BMFLOG(BMF_INFO) << "[update] 补全 scheduler: node_id=" << node_id
-                                     << " value=" << real_node->scheduler_;
-                }
-
-                // 7. 确保 option 是对象
-                if (!node.contains("option") || !node["option"].is_object()) {
-                    node["option"] = nlohmann::json::object();
-                    BMFLOG(BMF_INFO) << "[update] 初始化 option: node_id=" << node_id;
-                }
-            }
-        }
-
-        std::string config_str = new_update_config.json_value_.dump();
-        BMFLOG(BMF_INFO) << "[update] 底层配置(原始 JSON): " << config_str;
+        // 直接传递配置给engine层
+        std::string config_str = update_config.json_value_.dump();
+        BMFLOG(BMF_INFO) << "[Update] 底层配置(原始 JSON): " << config_str;  
 
         // 调用底层 update
         graph_->graphInstance_->update(config_str, false);
-        BMFLOG(BMF_INFO) << "[update] 成功";
+        BMFLOG(BMF_INFO) << "[Update] 成功";  
 
         return 0;
     } catch (const std::exception& e) {
-        BMFLOG(BMF_ERROR) << "[update] 异常: " << e.what();
+        BMFLOG(BMF_ERROR) << "[Update] 异常: " << e.what(); 
         return -1;
     }
 }
 
+
 // 动态添加节点
-int Graph::dynamic_add_node(const bmf_sdk::JsonParam& node_config) {
+int Graph::DynamicAddNode(const bmf_sdk::JsonParam& node_config) {
     try {
         // 1. 提取节点配置
         JsonParam update_cfg;
@@ -1282,7 +1176,7 @@ int Graph::dynamic_add_node(const bmf_sdk::JsonParam& node_config) {
         BMFLOG(BMF_INFO) << "[dynamic_add_node] 调用 update 配置:\n"
                          << update_cfg.json_value_.dump(4);
 
-        return update(update_cfg);
+        return Update(update_cfg);
 
     } catch (const std::exception& e) {
         BMFLOG(BMF_ERROR) << "[dynamic_add_node] 异常: " << e.what();
@@ -1292,7 +1186,7 @@ int Graph::dynamic_add_node(const bmf_sdk::JsonParam& node_config) {
 
 
 // ----------------- 动态删除节点 -----------------
-int Graph::dynamic_remove_node(const bmf_sdk::JsonParam& node_config) {
+int Graph::DynamicRemoveNode(const bmf_sdk::JsonParam& node_config) {
     try {
         // 1. 基础校验
         if (!node_config.json_value_.is_object() ||
@@ -1313,7 +1207,7 @@ int Graph::dynamic_remove_node(const bmf_sdk::JsonParam& node_config) {
         BMFLOG(BMF_INFO) << "[dynamic_remove_node] 调用 update 配置:\n"
                          << update_cfg.json_value_.dump(4);
 
-        return update(update_cfg);
+        return Update(update_cfg);
 
     } catch (const std::exception& e) {
         BMFLOG(BMF_ERROR) << "[dynamic_remove_node] 异常: " << e.what();
@@ -1323,40 +1217,33 @@ int Graph::dynamic_remove_node(const bmf_sdk::JsonParam& node_config) {
 
 
 // ----------------- 动态重置节点 -----------------
-nlohmann::json Graph::dynamic_reset_node(const bmf_sdk::JsonParam &node_config) {
+nlohmann::json Graph::DynamicResetNode(const bmf_sdk::JsonParam &node_config) {
     try {
-        // 1. 校验必要字段：仅需 alias 或 id（与 Python 一致）
+        // 1. 校验必要字段：只需要 alias
         if (!node_config.json_value_.is_object() ||
-            (!node_config.json_value_.contains("alias") &&
-             !node_config.json_value_.contains("id"))) {
-            BMFLOG(BMF_ERROR) << "[dynamic_reset_node] 配置无效，缺少 alias 或 id";
+            !node_config.json_value_.contains("alias")) {
+            BMFLOG(BMF_ERROR) << "[DynamicResetNode] 配置无效，缺少 alias"; 
             return nlohmann::json();
         }
 
-        // 2. 构造单个 reset 节点配置
+        // 2. 构造极简的 reset 节点配置
         nlohmann::json node_json;
-        node_json["action"] = "reset"; // 标记重置动作
-
-        // 传递 alias 或 id
-        if (node_config.json_value_.contains("alias"))
-            node_json["alias"] = node_config.json_value_["alias"];
-        if (node_config.json_value_.contains("id"))
-            node_json["id"] = node_config.json_value_["id"];
+        node_json["action"] = "reset";
+        node_json["alias"] = node_config.json_value_["alias"];
 
         nlohmann::json option_json = node_config.json_value_;
         option_json.erase("alias");
-        option_json.erase("id");
         node_json["option"] = option_json;
 
-        // 构造最终 update 配置，保证 nodes 字段存在
+        // 构造最终 update 配置
         nlohmann::json update_config;
         update_config["nodes"] = nlohmann::json::array({node_json});
 
-        BMFLOG(BMF_INFO) << "[dynamic_reset_node] 生成重置配置:\n" << update_config.dump(2);
+        BMFLOG(BMF_INFO) << "[DynamicResetNode] 生成重置配置:\n" << update_config.dump(2); 
         return update_config;
 
     } catch (const std::exception &e) {
-        BMFLOG(BMF_ERROR) << "[dynamic_reset_node] 异常: " << e.what();
+        BMFLOG(BMF_ERROR) << "[DynamicResetNode] 异常: " << e.what();  
         return nlohmann::json();
     }
 }

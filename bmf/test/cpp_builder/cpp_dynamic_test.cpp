@@ -47,7 +47,7 @@ TEST(cpp_dynamic_reset, reset_pass_through_node) {
     );
     BMFLOG(BMF_INFO) << "[cpp_dynamic_reset] 待重置节点创建完成";
 
-    // 5. 非阻塞启动图（对应 Python 层 run_wo_block，匹配 Graph::Start API）
+    // 4. 非阻塞启动图（对应 Python 层 run_wo_block，匹配 Graph::Start API）
     main_graph.Start(true, true);  // 参数1：dump_graph（true=打印图配置），参数2：needMerge（true=合并配置）
     BMFLOG(BMF_INFO) << "[cpp_dynamic_reset] 图非阻塞启动，等待20ms确保节点初始化";
     std::this_thread::sleep_for(std::chrono::milliseconds(20)); 
@@ -67,14 +67,14 @@ TEST(cpp_dynamic_reset, reset_pass_through_node) {
     bmf_sdk::JsonParam reset_config_param(reset_config);
     BMFLOG(BMF_INFO) << "[cpp_dynamic_reset] 动态重置配置:\n" << reset_config.dump(2);
 
-    nlohmann::json reset_update_config = main_graph.dynamic_reset_node(reset_config_param);
+    nlohmann::json reset_update_config = main_graph.DynamicResetNode(reset_config_param);
     if (reset_update_config.is_null()) {
         BMFLOG(BMF_ERROR) << "[cpp_dynamic_reset] 动态重置配置生成失败";
         FAIL() << "动态重置配置生成失败";
     }
 
     // 执行实际的更新操作
-    int update_ret = main_graph.update(bmf_sdk::JsonParam(reset_update_config));
+    int update_ret = main_graph.Update(bmf_sdk::JsonParam(reset_update_config));
     if (update_ret != 0) {
         BMFLOG(BMF_ERROR) << "[cpp_dynamic_reset] 动态重置调用失败，返回码：" << update_ret;
         FAIL() << "动态重置节点调用失败";
@@ -83,7 +83,7 @@ TEST(cpp_dynamic_reset, reset_pass_through_node) {
     BMFLOG(BMF_INFO) << "[cpp_dynamic_reset] 动态重置指令已发送，等待1秒确保处理完成";
     std::this_thread::sleep_for(std::chrono::seconds(1));   
 
-    // 8. 关闭图（释放资源，匹配 Graph::Close API）
+    // 6. 关闭图（释放资源，匹配 Graph::Close API）
     int close_ret = main_graph.Close();
     if (close_ret != 0) {
         BMFLOG(BMF_ERROR) << "[cpp_dynamic_reset] 图关闭失败，返回码：" << close_ret;
@@ -161,7 +161,7 @@ TEST(cpp_dynamic_add, add_decoder_and_encoder_only) {
     };
     // 调用dynamic_add_node
     bmf_sdk::JsonParam decoder1_param(decoder1_config);  
-    int add_decoder_ret = main_graph.dynamic_add_node(decoder1_param);
+    int add_decoder_ret = main_graph.DynamicAddNode(decoder1_param);
     if (add_decoder_ret != 0) {
         BMFLOG(BMF_ERROR) << "[cpp_dynamic_add] decoder1添加失败，返回码：" << add_decoder_ret;
         FAIL() << "decoder1添加失败";
@@ -190,12 +190,12 @@ TEST(cpp_dynamic_add, add_decoder_and_encoder_only) {
     };
     // 调用dynamic_add_node添加编码器
     bmf_sdk::JsonParam encoder1_param(encoder1_config); 
-    int add_encoder_ret = main_graph.dynamic_add_node(encoder1_param);
+    int add_encoder_ret = main_graph.DynamicAddNode(encoder1_param);
     if (add_encoder_ret != 0) {
         BMFLOG(BMF_ERROR) << "[cpp_dynamic_add] encoder1添加失败，返回码：" << add_encoder_ret;
         FAIL() << "encoder1添加失败";
     }
-    BMFLOG(BMF_INFO) << "[cpp_dynamic_add] encoder1动态添加完成）";
+    BMFLOG(BMF_INFO) << "[cpp_dynamic_add] encoder1动态添加完成";
     std::this_thread::sleep_for(std::chrono::milliseconds(50)); 
 
 

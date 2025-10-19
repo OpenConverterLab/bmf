@@ -619,13 +619,14 @@ class BMF_ENGINE_API Graph {
 
     Graph(Graph &&rhs) = default;
 
-    int update(const bmf_sdk::JsonParam& update_config);
+    int Update(const bmf_sdk::JsonParam& update_config);
 
-    int dynamic_add_node(const bmf_sdk::JsonParam& node_config);
+    int DynamicAddNode(const bmf_sdk::JsonParam& node_config);
 
-    int dynamic_remove_node(const bmf_sdk::JsonParam& node_config);
+    int DynamicRemoveNode(const bmf_sdk::JsonParam& node_config);
 
-    nlohmann::json dynamic_reset_node(const bmf_sdk::JsonParam& node_config);
+    nlohmann::json DynamicResetNode(const bmf_sdk::JsonParam& node_config);
+
   
     private:
     friend class Stream;
