@@ -631,9 +631,6 @@ class BMF_ENGINE_API Graph {
 
     std::shared_ptr<internal::RealGraph> graph_;
 
-    explicit Graph(std::shared_ptr<internal::RealGraph> real_graph) 
-    : graph_(real_graph) {}
-
   public:
     void SetTotalThreadNum(int num);
 

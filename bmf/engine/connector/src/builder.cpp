@@ -879,8 +879,10 @@ int Graph::Update(const Graph& update_graph) {
 }
 
 Graph Graph::DynamicResetNode(const bmf_sdk::JsonParam& node_config) {
-    auto reset_graph = graph_->DynamicResetNode(node_config);
-    return Graph(reset_graph);
+    auto new_real_graph = graph_->DynamicResetNode(node_config);
+    Graph reset_graph(new_real_graph->mode_);
+    reset_graph.graph_ = new_real_graph;
+    return reset_graph;
 }
 
 int Graph::Close() {
