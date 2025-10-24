@@ -151,7 +151,7 @@ RealNode::RealNode(const std::shared_ptr<RealGraph> &graph, int id,
                    std::string const &modulePath,
                    std::string const &moduleEntry,
                    InputManagerType inputStreamManager, int scheduler)
-    : graph_(graph), id_(id), alias_(std::move(alias)), option_(option),
+    : graph_(graph), id_(id), alias_(std::move(alias)), action_(), option_(option),
       moduleInfo_({moduleName, moduleType, modulePath, moduleEntry}),
       metaInfo_(), inputStreams_(std::move(inputStreams)),
       inputManager_(inputStreamManager), scheduler_(scheduler) {
@@ -188,6 +188,10 @@ std::shared_ptr<RealStream> RealNode::Stream(std::string const &name) {
 
 void RealNode::SetAlias(std::string const &alias) {
     graph_.lock()->GiveNodeAlias(shared_from_this(), alias);
+}
+
+void RealNode::SetAction(std::string const &action) {
+    action_ = action;
 }
 
 void RealNode::GiveStreamNotify(int idx, std::string const &notify) {
@@ -266,6 +270,12 @@ nlohmann::json RealNode::Dump() {
         info["output_streams"].push_back(s->Dump());
     info["option"] = option_.json_value_;
     info["scheduler"] = scheduler_;
+
+    // 添加action字段输出
+    if (!action_.empty()) {
+        info["action"] = action_;
+    }
+
     switch (inputManager_) {
     case Default:
         info["input_manager"] = "default";
@@ -435,35 +445,46 @@ int RealGraph::Run(bool dumpGraph, bool needMerge) {
     return graphInstance_->close();
 }
 
-int RealGraph::Update(const bmf_sdk::JsonParam& update_config) {
-    std::string config_str = update_config.json_value_.dump();
-    BMFLOG(BMF_INFO) << "[RealGraph::Update] 底层配置(原始 JSON): " << config_str;
+int RealGraph::Update(std::shared_ptr<RealGraph> update_graph) {
+    if (!update_graph) {
+        BMFLOG(BMF_ERROR) << "[RealGraph::Update] update graph is null";
+        return -1;
+    }
+    
+    // 获取更新图的配置
+    auto graph_config = update_graph->Dump();
+    
+    std::string config_str = graph_config.dump();
+    BMFLOG(BMF_INFO) << "[RealGraph::Update] 转发配置: " << config_str;
 
     graphInstance_->update(config_str, false);
-    BMFLOG(BMF_INFO) << "[RealGraph::Update] 成功";
-
+    BMFLOG(BMF_INFO) << "[RealGraph::Update] 转发成功";
     return 0;
 }
 
-nlohmann::json RealGraph::DynamicResetNode(const bmf_sdk::JsonParam& node_config) {
+std::shared_ptr<RealGraph> RealGraph::DynamicResetNode(const bmf_sdk::JsonParam& node_config) {
     if (!node_config.json_value_.is_object() || !node_config.json_value_.contains("alias")) {
         BMFLOG(BMF_ERROR) << "[RealGraph::DynamicResetNode] 配置无效，缺少 alias";
-        return nlohmann::json();
+        return nullptr;
     }
 
-    nlohmann::json node_json;
-    node_json["action"] = "reset";
-    node_json["alias"] = node_config.json_value_["alias"];
+    std::string alias = node_config.json_value_["alias"];
+    BMFLOG(BMF_INFO) << "[RealGraph::DynamicResetNode] 开始创建重置图，alias: " << alias;
 
-    nlohmann::json option_json = node_config.json_value_;
-    option_json.erase("alias");
-    node_json["option"] = option_json;
+    // 创建一个新的空图
+    auto reset_graph = std::make_shared<RealGraph>(mode_, bmf_sdk::JsonParam(nlohmann::json::object()));
 
-    nlohmann::json update_config;
-    update_config["nodes"] = nlohmann::json::array({node_json});
+    // 在当前图中创建重置节点
+    std::vector<std::shared_ptr<RealStream>> empty_inputs;
+    auto node = reset_graph->AddModule(alias, bmf_sdk::JsonParam(node_config.json_value_), 
+                                       empty_inputs, "", Python, "", "", Immediate, 0);
 
-    BMFLOG(BMF_INFO) << "[RealGraph::DynamicResetNode] 生成重置配置:\n" << update_config.dump(2);
-    return update_config;
+    // 设置节点的action为"reset"
+    node->SetAction("reset");
+    BMFLOG(BMF_INFO) << "[RealGraph::DynamicResetNode] 设置节点action为reset";
+
+    BMFLOG(BMF_INFO) << "[RealGraph::DynamicReset] 重置图创建成功，alias: " << alias;
+    return reset_graph;
 }
 
 void RealGraph::Start(
@@ -853,12 +874,13 @@ void Graph::Start(std::vector<Stream> &generateStreams, bool dumpGraph,
     graph_->Start(generateRealStreams, dumpGraph, needMerge);
 }
 
-int Graph::Update(const bmf_sdk::JsonParam& update_config) {
-    return graph_->Update(update_config);
+int Graph::Update(const Graph& update_graph) {
+    return graph_->Update(update_graph.graph_);
 }
 
-nlohmann::json Graph::DynamicResetNode(const bmf_sdk::JsonParam &node_config) {
-    return graph_->DynamicResetNode(node_config);
+Graph Graph::DynamicResetNode(const bmf_sdk::JsonParam& node_config) {
+    auto reset_graph = graph_->DynamicResetNode(node_config);
+    return Graph(reset_graph);
 }
 
 int Graph::Close() {

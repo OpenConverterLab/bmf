@@ -133,6 +133,8 @@ class RealNode : public std::enable_shared_from_this<RealNode> {
 
     void SetAlias(std::string const &alias);
 
+    void SetAction(std::string const &action);
+
     void SetInputManager(InputManagerType inputStreamManager);
 
     void SetScheduler(int scheduler);
@@ -189,6 +191,7 @@ class RealNode : public std::enable_shared_from_this<RealNode> {
     std::weak_ptr<RealGraph> graph_;
     int id_;
     std::string alias_;
+    std::string action_;
     bmf_sdk::JsonParam option_;
     std::vector<std::shared_ptr<RealStream>> inputStreams_;
     std::vector<std::shared_ptr<RealStream>> outputStreams_;
@@ -239,8 +242,8 @@ class RealGraph : public std::enable_shared_from_this<RealGraph> {
                         bool dumpGraph, bool needMerge);
 
     int Run(bool dumpGraph, bool needMerge);
-    int Update(const bmf_sdk::JsonParam& update_config);
-    nlohmann::json DynamicResetNode(const bmf_sdk::JsonParam& node_config);
+    int Update(std::shared_ptr<RealGraph> update_graph);
+    std::shared_ptr<RealGraph> DynamicResetNode(const bmf_sdk::JsonParam& node_config);
     int Close();
     int ForceClose();
     Packet Generate(std::string streamName, bool block = true);
@@ -628,6 +631,9 @@ class BMF_ENGINE_API Graph {
 
     std::shared_ptr<internal::RealGraph> graph_;
 
+    explicit Graph(std::shared_ptr<internal::RealGraph> real_graph) 
+    : graph_(real_graph) {}
+
   public:
     void SetTotalThreadNum(int num);
 
@@ -648,9 +654,9 @@ class BMF_ENGINE_API Graph {
 
     void Start(std::vector<Stream>& generateStreams, bool dumpGraph = true, bool needMerge = true);
     
-    int Update(const bmf_sdk::JsonParam& update_config);
-    
-    nlohmann::json DynamicResetNode(const bmf_sdk::JsonParam& node_config);
+    int Update(const Graph& update_graph);
+
+    Graph DynamicResetNode(const bmf_sdk::JsonParam& node_config);
     
     int Close();
     int ForceClose();
