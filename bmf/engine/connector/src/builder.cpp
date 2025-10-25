@@ -151,7 +151,7 @@ RealNode::RealNode(const std::shared_ptr<RealGraph> &graph, int id,
                    std::string const &modulePath,
                    std::string const &moduleEntry,
                    InputManagerType inputStreamManager, int scheduler)
-    : graph_(graph), id_(id), alias_(std::move(alias)), action_(), option_(option),
+    : graph_(graph), id_(id), alias_(std::move(alias)), option_(option),
       moduleInfo_({moduleName, moduleType, modulePath, moduleEntry}),
       metaInfo_(), inputStreams_(std::move(inputStreams)),
       inputManager_(inputStreamManager), scheduler_(scheduler) {
@@ -462,29 +462,23 @@ int RealGraph::Update(std::shared_ptr<RealGraph> update_graph) {
     return 0;
 }
 
-std::shared_ptr<RealGraph> RealGraph::DynamicResetNode(const bmf_sdk::JsonParam& node_config) {
+void RealGraph::DynamicResetNode(const bmf_sdk::JsonParam& node_config) {
     if (!node_config.json_value_.is_object() || !node_config.json_value_.contains("alias")) {
         BMFLOG(BMF_ERROR) << "[RealGraph::DynamicResetNode] 配置无效，缺少 alias";
-        return nullptr;
+        return;
     }
 
     std::string alias = node_config.json_value_["alias"];
     BMFLOG(BMF_INFO) << "[RealGraph::DynamicResetNode] 开始创建重置图，alias: " << alias;
 
-    // 创建一个新的空图
-    auto reset_graph = std::make_shared<RealGraph>(mode_, bmf_sdk::JsonParam(nlohmann::json::object()));
-
     // 在当前图中创建重置节点
     std::vector<std::shared_ptr<RealStream>> empty_inputs;
-    auto node = reset_graph->AddModule(alias, bmf_sdk::JsonParam(node_config.json_value_), 
-                                       empty_inputs, "", Python, "", "", Immediate, 0);
+    auto reset_node = AddModule(alias, bmf_sdk::JsonParam(node_config.json_value_),
+                               empty_inputs, "", Python, "", "", Immediate, 0);
 
     // 设置节点的action为"reset"
-    node->SetAction("reset");
-    BMFLOG(BMF_INFO) << "[RealGraph::DynamicResetNode] 设置节点action为reset";
-
-    BMFLOG(BMF_INFO) << "[RealGraph::DynamicReset] 重置图创建成功，alias: " << alias;
-    return reset_graph;
+    reset_node->SetAction("reset");
+    BMFLOG(BMF_INFO) << "[RealGraph::DynamicResetNode] 重置节点配置完成，已标记action:reset，alias: " << alias;
 }
 
 void RealGraph::Start(
@@ -878,11 +872,8 @@ int Graph::Update(const Graph& update_graph) {
     return graph_->Update(update_graph.graph_);
 }
 
-Graph Graph::DynamicResetNode(const bmf_sdk::JsonParam& node_config) {
-    auto new_real_graph = graph_->DynamicResetNode(node_config);
-    Graph reset_graph(new_real_graph->mode_);
-    reset_graph.graph_ = new_real_graph;
-    return reset_graph;
+void Graph::DynamicResetNode(const bmf_sdk::JsonParam& node_config) {
+    graph_->DynamicResetNode(node_config);
 }
 
 int Graph::Close() {

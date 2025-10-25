@@ -14,19 +14,17 @@ TEST(cpp_dynamic_reset, reset_pass_through_node) {
     BMF_CPP_FILE_REMOVE(output_file); 
 
     // 1. 创建主图
-    nlohmann::json graph_para = {{"dump_graph", 1}};
-    auto main_graph = bmf::builder::Graph(bmf::builder::NormalMode,
-                                          bmf_sdk::JsonParam(graph_para));
+    auto main_graph = bmf::builder::Graph(bmf::builder::NormalMode);
     BMFLOG(BMF_INFO) << "[cpp_dynamic_reset] 主图创建完成";
 
-    // 3. 添加解码器节点
+    // 2. 添加解码器节点
     nlohmann::json decode_para = {
-        {"input_path", input_file} 
+        {"input_path", input_file}, 
+        {"alias", "decoder0"}     
     };
-    auto decoder_node = main_graph.Decode(bmf_sdk::JsonParam(decode_para), 
-                                          "decoder0");  // 第二个参数是节点别名
-    auto video_stream = decoder_node["video"];  // 提取视频流
-    auto audio_stream = decoder_node["audio"];  // 提取音频流
+    auto decoder_node = main_graph.Decode(bmf_sdk::JsonParam(decode_para)); 
+    auto video_stream = decoder_node["video"];  
+    auto audio_stream = decoder_node["audio"];
     BMFLOG(BMF_INFO) << "[cpp_dynamic_reset] 解码器节点创建完成：alias=decoder0";
 
     // 3. 添加待重置 PassThrough 节点
@@ -67,11 +65,14 @@ TEST(cpp_dynamic_reset, reset_pass_through_node) {
     bmf_sdk::JsonParam reset_config_param(reset_config);
     BMFLOG(BMF_INFO) << "[cpp_dynamic_reset] 动态重置配置:\n" << reset_config.dump(2);
 
-    // 6. 创建重置图
-    auto reset_graph = main_graph.DynamicResetNode(reset_config_param);    
+    // 6. 创建空重置图
+    auto temp_graph = bmf::builder::Graph(bmf::builder::NormalMode);
 
-    // 7. 执行实际的更新操作
-    int update_ret = main_graph.Update(reset_graph);
+    // 7. 临时图描述重置信息
+    temp_graph.DynamicResetNode(reset_config_param);
+
+    // 8. 主图执行更新
+    int update_ret = main_graph.Update(temp_graph);
     if (update_ret != 0) {
         BMFLOG(BMF_ERROR) << "[cpp_dynamic_reset] 动态重置调用失败，返回码：" << update_ret;
         FAIL() << "动态重置节点调用失败";
@@ -80,7 +81,7 @@ TEST(cpp_dynamic_reset, reset_pass_through_node) {
     BMFLOG(BMF_INFO) << "[cpp_dynamic_reset] 动态重置指令已发送，等待1秒确保处理完成";
     std::this_thread::sleep_for(std::chrono::seconds(1));   
 
-    // 8. 关闭图
+    // 9. 关闭图
     int close_ret = main_graph.Close();
     if (close_ret != 0) {
         BMFLOG(BMF_ERROR) << "[cpp_dynamic_reset] 图关闭失败，返回码：" << close_ret;

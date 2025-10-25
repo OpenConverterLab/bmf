@@ -243,7 +243,7 @@ class RealGraph : public std::enable_shared_from_this<RealGraph> {
 
     int Run(bool dumpGraph, bool needMerge);
     int Update(std::shared_ptr<RealGraph> update_graph);
-    std::shared_ptr<RealGraph> DynamicResetNode(const bmf_sdk::JsonParam& node_config);
+    void DynamicResetNode(const bmf_sdk::JsonParam& node_config);
     int Close();
     int ForceClose();
     Packet Generate(std::string streamName, bool block = true);
@@ -653,7 +653,7 @@ class BMF_ENGINE_API Graph {
     
     int Update(const Graph& update_graph);
 
-    Graph DynamicResetNode(const bmf_sdk::JsonParam& node_config);
+    void DynamicResetNode(const bmf_sdk::JsonParam& node_config);
     
     int Close();
     int ForceClose();
