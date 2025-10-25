@@ -133,8 +133,6 @@ class RealNode : public std::enable_shared_from_this<RealNode> {
 
     void SetAlias(std::string const &alias);
 
-    void SetAction(std::string const &action);
-
     void SetInputManager(InputManagerType inputStreamManager);
 
     void SetScheduler(int scheduler);
@@ -243,7 +241,7 @@ class RealGraph : public std::enable_shared_from_this<RealGraph> {
 
     int Run(bool dumpGraph, bool needMerge);
     int Update(std::shared_ptr<RealGraph> update_graph);
-    void DynamicResetNode(const bmf_sdk::JsonParam& node_config);
+    void DynamicReset(const bmf_sdk::JsonParam& node_config);
     int Close();
     int ForceClose();
     Packet Generate(std::string streamName, bool block = true);
@@ -624,7 +622,7 @@ class BMF_ENGINE_API Graph {
 
     Graph(Graph &&rhs) = default;
 
-    private:
+  private:
     friend class Stream;
 
     friend Node;
@@ -653,7 +651,7 @@ class BMF_ENGINE_API Graph {
     
     int Update(const Graph& update_graph);
 
-    void DynamicResetNode(const bmf_sdk::JsonParam& node_config);
+    void DynamicReset(const bmf_sdk::JsonParam& node_config);
     
     int Close();
     int ForceClose();

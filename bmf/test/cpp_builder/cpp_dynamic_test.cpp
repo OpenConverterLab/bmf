@@ -69,7 +69,7 @@ TEST(cpp_dynamic_reset, reset_pass_through_node) {
     auto temp_graph = bmf::builder::Graph(bmf::builder::NormalMode);
 
     // 7. 临时图描述重置信息
-    temp_graph.DynamicResetNode(reset_config_param);
+    temp_graph.DynamicReset(reset_config_param);
 
     // 8. 主图执行更新
     int update_ret = main_graph.Update(temp_graph);
