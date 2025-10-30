@@ -441,34 +441,23 @@ int RealGraph::Run(bool dumpGraph, bool needMerge) {
 
 int RealGraph::Update(std::shared_ptr<RealGraph> update_graph) {
     if (!update_graph) {
-        BMFLOG(BMF_ERROR) << "[RealGraph::Update] update graph is null";
-        return -1;
+        throw std::logic_error("Update graph is null.");
     }
-    
     std::string config_str = to_string(update_graph->Dump());
-    BMFLOG(BMF_INFO) << "[RealGraph::Update] 转发配置: " << config_str;
-
     graphInstance_->update(config_str, false);
-    BMFLOG(BMF_INFO) << "[RealGraph::Update] 转发成功";
     return 0;
 }
 
 void RealGraph::DynamicReset(const bmf_sdk::JsonParam& node_config) {
     if (!node_config.json_value_.is_object() || !node_config.json_value_.contains("alias")) {
-        BMFLOG(BMF_ERROR) << "[RealGraph::DynamicReset] 配置无效，缺少 alias";
-        return;
+        throw std::logic_error("Invalid configuration: missing alias.");
     }
 
     std::string alias = node_config.json_value_["alias"];
-    BMFLOG(BMF_INFO) << "[RealGraph::DynamicReset] 开始创建重置图，alias: " << alias;
-
-    // 创建重置节点
     auto reset_node = AddModule(alias, bmf_sdk::JsonParam(node_config.json_value_),
                                {}, "", Python, "", "", Immediate, 0);
 
-    // 设置节点的action为"reset"
     reset_node->action_ = "reset";
-    BMFLOG(BMF_INFO) << "[RealGraph::DynamicReset] 重置节点配置完成，已标记action:reset，alias: " << alias;
 }
 
 void RealGraph::Start(
