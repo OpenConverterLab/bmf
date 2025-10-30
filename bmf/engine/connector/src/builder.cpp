@@ -452,21 +452,12 @@ void RealGraph::DynamicReset(const bmf_sdk::JsonParam& node_config) {
     if (!node_config.json_value_.is_object() || !node_config.json_value_.contains("alias")) {
         throw std::logic_error("Invalid configuration: missing alias.");
     }
-   
-    std::vector<std::string> reset_alias = node_config.json_value_["alias"].get<std::vector<std::string>>();
 
-    if (reset_alias.empty() || std::any_of(reset_alias.begin(), reset_alias.end(), [](const auto& s) {
-        return s.empty();
-    })) {
-        throw std::logic_error("'alias' array is empty or contains empty strings.");
-    }
+    std::string alias = node_config.json_value_["alias"];
+    auto reset_node = AddModule(alias, bmf_sdk::JsonParam(node_config.json_value_),
+                               {}, "", CPP, "", "", Immediate, 0);
 
-    for (const std::string& alias : reset_alias) {
-        auto reset_node = AddModule(alias, bmf_sdk::JsonParam(node_config.json_value_),
-                                   {}, "", CPP, "", "", Immediate, 0);
-
-        reset_node->action_ = "reset";
-    }
+    reset_node->action_ = "reset";
 }
 
 void RealGraph::Start(
