@@ -48,7 +48,7 @@ TEST(cpp_dynamic_reset, reset_pass_through_node) {
     
     // 5. Construct dynamic reset configuration
     nlohmann::json reset_config = {
-        {"alias", "reset_pass_through"}, 
+        {"alias", {"reset_pass_through"}}, 
         {"output_path", output_file},     
         {"video_params", {               
             {"codec", "h264"},
