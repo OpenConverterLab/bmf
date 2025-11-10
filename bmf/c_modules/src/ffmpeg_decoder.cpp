@@ -2538,6 +2538,12 @@ int CFFDecoder::process(Task &task) {
         init_input(dec_opts_);
     }
 
+    if (callback_endpoint_ != NULL) {
+        std::string info = "total frame number: " + std::to_string(video_stream_->nb_frames);
+        auto para = CBytes::make((uint8_t *)info.c_str(), info.size());
+        callback_endpoint_(0, para);
+    }
+
     if (!input_fmt_ctx_) {
         BMFLOG_NODE(BMF_WARNING, node_id_)
             << "decoder input_fmt_ctx_ is not ready or might be free";
@@ -2634,6 +2640,11 @@ bool CFFDecoder::report_user_df_data(JsonParam &json_param) {
     }
     
     return has_data;
+}
+
+void CFFDecoder::set_callback(
+    std::function<CBytes(int64_t, CBytes)> callback_endpoint) {
+    callback_endpoint_ = callback_endpoint;
 }
 
 REGISTER_MODULE_CLASS(CFFDecoder)

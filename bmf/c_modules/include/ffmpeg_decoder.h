@@ -173,6 +173,8 @@ class CFFDecoder : public Module {
 
     int orig_pts_time_ = 0;
 
+    std::function<CBytes(int64_t, CBytes)> callback_endpoint_;
+
     //io frame match
     bool io_frm_match_ = false;
 
@@ -237,6 +239,8 @@ class CFFDecoder : public Module {
     int read_packet(uint8_t *buf, int buf_size);
 
     int pkt_ts(AVPacket *pkt, int index);
+
+    void set_callback(std::function<CBytes(int64_t, CBytes)> callback_endpoint) override;
 
     bool report_user_df_data(JsonParam &json_param);
 };
