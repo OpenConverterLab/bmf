@@ -136,6 +136,13 @@ int CFFEncoder::init() {
      * @endcode
      * @} */
     oformat_ = "mp4";
+    if (output_path_.substr(output_path_.find_last_of('.') + 1) == "mkv")
+        oformat_ = "matroska";
+    if (output_path_.substr(output_path_.find_last_of('.') + 1) == "jpg" ||
+        output_path_.substr(output_path_.find_last_of('.') + 1) == "jpeg")
+        oformat_ = "image2";
+    if (output_path_.substr(output_path_.find_last_of('.') + 1) == "png")
+        oformat_ = "png_pipe";
     if (output_path_.substr(output_path_.find_last_of('.') + 1) == "m3u8")
         oformat_ = "hls";
     if (input_option_.has_key("format"))
