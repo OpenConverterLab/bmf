@@ -124,16 +124,16 @@ function build_vpx_unix() {
 
 function build_ffmpeg_unix() {
     cd $1
-    if [ ! -e ffmpeg-4.4.tar.gz2 ]
+    if [ ! -e ffmpeg-5.1.tar.gz2 ]
     then
-        curl -O -L https://ffmpeg.org/releases/ffmpeg-4.4.tar.bz2
+        curl -O -L https://ffmpeg.org/releases/ffmpeg-5.1.tar.bz2
     fi
-    if [ -d ffmpeg-4.4 ]
+    if [ -d ffmpeg-5.1 ]
     then
-        rm -rf ffmpeg-4.4
+        rm -rf ffmpeg-5.1
     fi
-    tar xjvf ffmpeg-4.4.tar.bz2
-    cd ffmpeg-4.4
+    tar xjvf ffmpeg-5.1.tar.bz2
+    cd ffmpeg-5.1
 
     if [ ${OS} == "Linux" ] && [[ ${DEVICE} =~ "gpu" ]] && [ $(uname -m) == "x86_64" ]
     then
@@ -322,13 +322,13 @@ function install_cudnn_linux() {
 
 function check_lib() {
     cd $1
-    if [ ! -e ffmpeg-4.4 ]
+    if [ ! -e ffmpeg-5.1 ]
     then
-        curl -O -L https://ffmpeg.org/releases/ffmpeg-4.4.tar.bz2
-        tar xjvf ffmpeg-4.4.tar.bz2
+        curl -O -L https://ffmpeg.org/releases/ffmpeg-5.1.tar.bz2
+        tar xjvf ffmpeg-5.1.tar.bz2
     fi
 
-    cd ffmpeg-4.4
+    cd ffmpeg-5.1
     str="\-\-enable-lib"$2
     ./configure --help | grep ''${str}''
     if [ $? -eq 0 ]
