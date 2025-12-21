@@ -10,7 +10,7 @@ on:
         default: false
   push:
     tags:
-      - "v*.*.*"
+      - "oc*.*.*"
 
 jobs:
   build_manylinux_wheels:
